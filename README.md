@@ -1,26 +1,28 @@
-# Nginx使用手册
+# Nginx 使用手册
 
 ## 目录
-- [1. Nginx基础](#1-nginx基础)
-	- [1.1 安装](#11-安装)
-	- [1.2 相关文件](#12-相关文件)
-	- [1.3 命令](#13-命令)
-    - [1.4 静态文件服务](#13-静态文件服务)
 
-### 1. Nginx基础
+- [1. Nginx 基础](#1-nginx基础)
+  - [1.1 安装](#11-安装)
+  - [1.2 相关文件](#12-相关文件)
+  - [1.3 命令](#13-命令)
+  - [1.4 静态文件服务](#14-静态文件服务)
 
+### 1. Nginx 基础
 
 #### 1.1 安装
 
 ```
 # 安装nginx包
-apt-get install -y nginx 
+apt-get install -y nginx
 # 开机启动
-systemctl enable nginx 
+systemctl enable nginx
 # 开启nginx服务
-systemctl start nginx 
+systemctl start nginx
 ```
-* docker容器
+
+- docker 容器
+
 ```
 docker run -d -p 80:80 -p 443:443 --name nginx nginx
 ```
@@ -29,7 +31,7 @@ docker run -d -p 80:80 -p 443:443 --name nginx nginx
 
 ```
 # 默认配置路径
-/etc/nginx 
+/etc/nginx
 # 默认配置文件
 /etc/nginx/nginx.conf
 # 默认http服务配置文件
@@ -62,5 +64,3 @@ server {
     }
 }
 ```
-
-
