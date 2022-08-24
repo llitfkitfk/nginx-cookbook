@@ -10,7 +10,14 @@
 - [2. 负载均衡](#2-负载均衡)
   - [2.1 HTTP 负载均衡](#21-http-负载均衡)
   - [2.2 TCP 负载均衡](#22-tcp-负载均衡)
-  
+  - [2.3 UDP 负载均衡](#23-udp-负载均衡)
+  - [2.4 负载均衡方法](#24-负载均衡方法)
+- [3. 流量管理](#3-流量管理)
+  - [3.1 A/B 测试](#31-ab-测试)
+  - [3.2 限制连接数](#32-限制连接数)
+  - [3.3 限制速率](#33-限制速率)
+  - [3.4 限制带宽](#34-限制带宽)
+
 ### 1. Nginx 基础
 
 #### 1.1 安装
@@ -104,7 +111,7 @@ server {
 ```
 
 - 注意如果使用 tcp 负载均衡
-  需要在/etc/nginx/nginx.conf 文件内添加stream模块
+  需要在/etc/nginx/nginx.conf 文件内添加 stream 模块
 
 ```
 user nginx;
@@ -121,5 +128,118 @@ stream {
 
 http {
     ...
+}
+```
+
+#### 2.3 UDP 负载均衡
+
+```
+# 文件: /etc/nginx/stream.conf.d/udp_load_balancing_test.conf
+
+upstream ntp {
+    server ntp1.gokit.info:456   weight=2;
+    server ntp1.gokit.info:456;
+}
+server {
+    listen 456 udp;
+    proxy_pass ntp;
+}
+
+```
+
+#### 2.4 负载均衡方法
+
+- Round robin - 轮询 (默认)
+
+```
+upstream backend {
+    server backend1.gokit.info;
+    server backend2.gokit.info;
+}
+```
+
+- Least connections - 最少连接
+
+```
+upstream backend {
+    least_conn;
+    server backend1.gokit.info;
+    server backend2.gokit.info;
+}
+```
+
+- IP hash - IP 散列
+
+```
+upstream backend {
+    ip_hash;
+    server backend1.gokit.info;
+    server backend2.gokit.info;
+}
+```
+
+### 3. 流量管理
+
+#### 3.1 A/B 测试
+
+```
+http {
+    split_clients "${remote_addr}" $site_root_folder {
+        20% "/var/www/site1"
+        *   "/var/www/site2"
+    }
+    server {
+        listen 80;
+        server_name static-test.gokit.info;
+        root $site_root_folder;
+        location / {
+            index index.html;
+        }
+    }
+
+    split_clients "${remote_addr}AAA" $variant {
+        20% "backendv2";
+        *   "backendv1";
+    }
+    server {
+        listen 80;
+        server_name proxy-test.gokit.info;
+        location / {
+            proxy_pass http://$variant;
+        }
+    }
+}
+```
+
+#### 3.2 限制连接数
+
+```
+http {
+    limit_conn_zone $binary_remote_addr zone=limitbyaddr:16m;
+    limit_conn_status 429; # 429 Too Many Requests
+    server {
+        limit_conn limitbyaddr 40;
+    }
+}
+```
+
+#### 3.3 限制速率
+
+```
+http {
+    limit_req_zone $binary_remote_addr zone=limitbyaddr:16m rate=4r/s;
+    limit_req_status 429;
+    server {
+        limit_req zone=limitbyaddr burst=16 delay=8;
+    }
+}
+```
+
+#### 3.4 限制带宽
+
+```
+location /download/ {
+    limit_rate_after 16m;
+    limit_rate 1m; # 每秒1m
 }
 ```
